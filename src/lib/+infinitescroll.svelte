@@ -1,54 +1,58 @@
-<script>
-	let lastscroll = 0;
+<script lang="ts">
+	import { onMount } from 'svelte';
 
-    // let data2;
-	let data = [1, 2, 3, 4, 5, 5, 6, 5];
-	let pagenum = 1;
-	let isfetching = false;
-	let hasMore = true;
-    
+	let pageNo = 1;
+	let inLoading = false;
+
+	interface Post {
+		userId: number;
+		id: number;
+		title: string;
+		body: string;
+	}
+
 	/**
 	 * @type {any[]}
 	 */
-	let items = [];
+	let posts: Array<Post> = [];
+
+	onMount(async () => {
+		loadMore();
+	});
 
 	/**
-	 * @param {any} e
+	 *
 	 */
-	function loadMore(e) {
-		const scrollTopPosition = window.pageYOffset;
-		if (scrollTopPosition > lastscroll) {
-			lastscroll = scrollTopPosition;
-			fetch(`https://jsonplaceholder.typicode.com/posts?_page=${1}`)
-            
-				.then((res) => res.json())
-				.then((json) => {
-                });
-			console.log('down');
-		}
+	async function loadMore() {
+		if (inLoading) return;
+		inLoading = true;
+		const response = await fetch(`https://jsonplaceholder.typicode.com/posts?_page=${pageNo}`);
+		const data = await response.json();
+		posts = [...posts, ...data];
+		pageNo++;
+		inLoading = false;
 	}
 
-	async function fetchData(){
-const response = await fetch(`https://jsonplaceholder.typicode.com/posts?_page=${1}`);
-
-const  data2 = await response.json();
-
-console.log(data2[0].body)
-
-
-    }
-
-    fetchData()
+	function onScroll(e: Event) {
+		const el = document.documentElement;
+		const bottom = el.scrollHeight - el.clientHeight - el.scrollTop;
+		if (bottom <= 300) loadMore();
+	}
 </script>
 
-{#each data2 as item}
-	<div class="item">{item.id}</div>
-{/each}
+<svelte:window on:scroll={onScroll} />
 
-<svelte:window on:scroll={loadMore} />
+{#each posts as post}
+	<div class="item">
+		<div>No. {post.id}</div>
+		<div>{post.title}</div>
+		<div>{post.body}</div>
+	</div>
+	<hr />
+{/each}
 
 <style>
 	.item {
-		font-size: 20em;
+		font-size: 2em;
 	}
 </style>
